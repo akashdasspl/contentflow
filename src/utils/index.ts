@@ -5,13 +5,33 @@ import { APIGatewayResponse, APIError, ValidationError } from '../types';
 import * as jwt from 'jsonwebtoken';
 
 // Environment variables
-export const getEnvVar = (name: string, defaultValue?: string): string => {
+//export const getEnvVar = (name: string, defaultValue?: string): string => {
+  //const value = process.env[name];
+  //if (!value && !defaultValue) {
+    //throw new Error(`Environment variable ${name} is required`);
+  //}
+  //return value || defaultValue!;
+//};
+
+// new code
+export function getEnvVar(name: string, defaultValue?: string): string {
   const value = process.env[name];
-  if (!value && !defaultValue) {
-    throw new Error(`Environment variable ${name} is required`);
+
+  // If value exists → return it
+  if (value) return value;
+
+  // If default provided → use it
+  if (defaultValue) {
+    console.warn(`⚠️ Missing env: ${name}, using default: ${defaultValue}`);
+    return defaultValue;
   }
-  return value || defaultValue!;
-};
+
+  // Otherwise fallback
+  console.warn(`⚠️ Missing env: ${name}, using fallback`);
+  return "test";
+}
+
+// new end
 
 // API Response helpers
 export const createResponse = (

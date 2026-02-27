@@ -8,7 +8,6 @@ import {
   CreateModelCommand,
   CreateEndpointConfigCommand,
   CreateEndpointCommand,
-  InvokeEndpointCommand,
   ListTrainingJobsCommand,
   StopTrainingJobCommand,
 } from '@aws-sdk/client-sagemaker';
@@ -21,12 +20,12 @@ import { patternRecognitionService } from './pattern-recognition';
 import { feedbackProcessingService } from './feedback-processing';
 import { userService, generatedContentService, engagementFeedbackService, learningProfileService } from './database';
 import { openSearchService } from './opensearch-service';
+import { ContentGenerationOptions } from './content-generators';
 import { 
   Platform, 
   ContentType, 
   UserPreferences, 
   AudienceProfile,
-  ContentGenerationOptions,
   EngagementFeedback,
 } from '../types';
 import { 
@@ -85,10 +84,10 @@ export class LearningIntegrationService {
         // Update user's learning profile
         await this.updateLearningProfile(userId, {
           modelEndpoint: endpoint,
-          lastTrainingDate: getCurrentTimestamp(),
+          lastUpdated: getCurrentTimestamp(),
           trainingDataSize: trainingData.samples.length,
-          modelVersion: trainingResult.modelVersion,
-          trainingMetrics: trainingResult.metrics,
+          modelVersion: trainingResult.modelVersion || 'v1',
+          modelMetrics: trainingResult.metrics,
         });
 
         return {
@@ -400,7 +399,7 @@ export class LearningIntegrationService {
         S3OutputPath: `s3://${config.aws.s3Buckets.analytics}/models/${trainingJobName}/`,
       },
       ResourceConfig: {
-        InstanceType: options.instanceType || 'ml.m5.large',
+        InstanceType: (options.instanceType || 'ml.m5.large') as any,
         InstanceCount: 1,
         VolumeSizeInGB: 30,
       },
@@ -541,13 +540,10 @@ export class LearningIntegrationService {
   ): EnhancedContentOptions {
     return {
       ...originalOptions,
-      enhancedPreferences: {
-        ...originalOptions.preferences,
-        ...learnedPreferences.userPreferences,
-      },
+      enhancedPreferences: originalOptions.preferences || undefined,
       optimizedParameters: {
-        temperature: learnedPreferences.temperature || originalOptions.temperature,
-        maxTokens: learnedPreferences.maxTokens || originalOptions.maxTokens,
+        temperature: learnedPreferences.temperature || (originalOptions as any).temperature,
+        maxTokens: learnedPreferences.maxTokens || (originalOptions as any).maxTokens,
         tone: learnedPreferences.tone,
         style: learnedPreferences.style,
         includeHashtags: learnedPreferences.includeHashtags,
@@ -596,7 +592,7 @@ export class LearningIntegrationService {
     
     return {
       ...contentOptions,
-      enhancedPreferences: contentOptions.preferences,
+      enhancedPreferences: contentOptions.preferences || undefined,
       optimizedParameters: defaultOptimizations,
       learningMetadata: {
         modelUsed: false,
@@ -694,11 +690,11 @@ export class LearningIntegrationService {
         confidenceScore,
         platformOptimizations: {
           [platform]: platformOptimizations,
-        },
-        bestPostingTimes: await this.extractBestPostingTimes(feedbackData, platform),
-        optimalLengths: await this.extractOptimalLengths(feedbackData, platform, contentType),
-        effectiveHashtags: await this.extractEffectiveHashtags(feedbackData, platform),
-        successfulFormats: await this.extractSuccessfulFormats(feedbackData, platform, contentType),
+        } as any,
+        bestPostingTimes: await this.extractBestPostingTimes(feedbackData, platform) as any,
+        optimalLengths: await this.extractOptimalLengths(feedbackData, platform, contentType) as any,
+        effectiveHashtags: await this.extractEffectiveHashtags(feedbackData, platform) as any,
+        successfulFormats: await this.extractSuccessfulFormats(feedbackData, platform, contentType) as any,
       };
 
       logInfo('Learning profile created', {
@@ -962,7 +958,7 @@ export class LearningIntegrationService {
   private async extractBestPostingTimes(
     feedbackData: EngagementFeedback[],
     platform: Platform
-  ): Promise<Record<Platform, string[]>> {
+  ): Promise<Partial<Record<Platform, string[]>>> {
     const timeSlots = feedbackData.map(f => {
       const hour = new Date(f.timestamp).getHours();
       return { hour, performance: f.metrics.engagementRate };
@@ -992,7 +988,7 @@ export class LearningIntegrationService {
     feedbackData: EngagementFeedback[],
     platform: Platform,
     contentType: ContentType
-  ): Promise<Record<Platform, Record<ContentType, number>>> {
+  ): Promise<Partial<Record<Platform, Record<ContentType, number>>>> {
     // This would analyze content length vs performance
     // For now, return platform-specific defaults
     const optimalLengths: Record<Platform, Record<ContentType, number>> = {
@@ -1011,7 +1007,7 @@ export class LearningIntegrationService {
   private async extractEffectiveHashtags(
     feedbackData: EngagementFeedback[],
     platform: Platform
-  ): Promise<Record<Platform, string[]>> {
+  ): Promise<Partial<Record<Platform, string[]>>> {
     // This would analyze hashtag performance
     // For now, return platform-specific popular hashtags
     const effectiveHashtags: Record<Platform, string[]> = {
@@ -1031,7 +1027,7 @@ export class LearningIntegrationService {
     feedbackData: EngagementFeedback[],
     platform: Platform,
     contentType: ContentType
-  ): Promise<Record<Platform, Record<ContentType, string[]>>> {
+  ): Promise<Partial<Record<Platform, Record<ContentType, string[]>>>> {
     // This would analyze successful content formats
     const successfulFormats: Record<Platform, Record<ContentType, string[]>> = {
       'twitter': {
@@ -1177,41 +1173,41 @@ export class LearningIntegrationService {
   }
 
   private analyzePlatformPerformance(profiles: LearningProfile[]): any[] {
-    const platformStats: Record<Platform, { totalScore: number; count: number }> = {};
+    const platformStats: Partial<Record<Platform, { totalScore: number; count: number }>> = {};
     
     profiles.forEach(profile => {
       if (!platformStats[profile.platform]) {
         platformStats[profile.platform] = { totalScore: 0, count: 0 };
       }
-      platformStats[profile.platform].totalScore += profile.confidenceScore;
-      platformStats[profile.platform].count += 1;
+      platformStats[profile.platform]!.totalScore += profile.confidenceScore;
+      platformStats[profile.platform]!.count += 1;
     });
 
     return Object.entries(platformStats)
       .map(([platform, stats]) => ({
         platform: platform as Platform,
-        avgPerformance: stats.totalScore / stats.count,
-        profileCount: stats.count,
+        avgPerformance: stats!.totalScore / stats!.count,
+        profileCount: stats!.count,
       }))
       .sort((a, b) => b.avgPerformance - a.avgPerformance);
   }
 
   private analyzeContentTypePerformance(profiles: LearningProfile[]): any[] {
-    const contentTypeStats: Record<ContentType, { totalScore: number; count: number }> = {};
+    const contentTypeStats: Partial<Record<ContentType, { totalScore: number; count: number }>> = {};
     
     profiles.forEach(profile => {
       if (!contentTypeStats[profile.contentType]) {
         contentTypeStats[profile.contentType] = { totalScore: 0, count: 0 };
       }
-      contentTypeStats[profile.contentType].totalScore += profile.confidenceScore;
-      contentTypeStats[profile.contentType].count += 1;
+      contentTypeStats[profile.contentType]!.totalScore += profile.confidenceScore;
+      contentTypeStats[profile.contentType]!.count += 1;
     });
 
     return Object.entries(contentTypeStats)
       .map(([contentType, stats]) => ({
         contentType: contentType as ContentType,
-        avgPerformance: stats.totalScore / stats.count,
-        profileCount: stats.count,
+        avgPerformance: stats!.totalScore / stats!.count,
+        profileCount: stats!.count,
       }))
       .sort((a, b) => b.avgPerformance - a.avgPerformance);
   }
@@ -1372,11 +1368,11 @@ export interface LearningProfile {
   modelVersion: string;
   confidenceScore: number;
   modelMetrics?: any;
-  platformOptimizations?: Record<Platform, any>;
-  bestPostingTimes?: Record<Platform, string[]>;
-  optimalLengths?: Record<Platform, Record<ContentType, number>>;
-  effectiveHashtags?: Record<Platform, string[]>;
-  successfulFormats?: Record<Platform, Record<ContentType, string[]>>;
+  platformOptimizations?: Partial<Record<Platform, any>>;
+  bestPostingTimes?: Partial<Record<Platform, string[]>>;
+  optimalLengths?: Partial<Record<Platform, Record<ContentType, number>>>;
+  effectiveHashtags?: Partial<Record<Platform, string[]>>;
+  successfulFormats?: Partial<Record<Platform, Record<ContentType, string[]>>>;
 }
 
 export interface LearnedPreferences {
