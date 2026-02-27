@@ -1,0 +1,30 @@
+import * as cdk from 'aws-cdk-lib';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+import { Construct } from 'constructs';
+export declare class ContentFlowAiStack extends cdk.Stack {
+    readonly userTable: dynamodb.Table;
+    readonly contentIdeasTable: dynamodb.Table;
+    readonly generatedContentTable: dynamodb.Table;
+    readonly engagementFeedbackTable: dynamodb.Table;
+    readonly audienceProfilesTable: dynamodb.Table;
+    readonly contentStorageBucket: s3.Bucket;
+    readonly analyticsBucket: s3.Bucket;
+    readonly api: apigateway.RestApi;
+    readonly userPool: cognito.UserPool;
+    readonly userPoolClient: cognito.UserPoolClient;
+    constructor(scope: Construct, id: string, props?: cdk.StackProps);
+    private createDynamoDBTables;
+    private createS3Buckets;
+    private createCognitoUserPool;
+    private createApiGateway;
+    private createSQSQueues;
+    private createSNSTopics;
+    private createEventBridge;
+    private createOpenSearchCluster;
+    private createCloudWatchLogGroups;
+    private createIAMRoles;
+    private createOutputs;
+}

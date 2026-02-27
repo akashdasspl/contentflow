@@ -1,0 +1,51 @@
+{
+  "name": "contentflow-ai",
+  "version": "1.0.0",
+  "description": "AI-driven content generation platform built on AWS",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
+    "synth": "cdk synth",
+    "diff": "cdk diff"
+  },
+  "keywords": [
+    "aws",
+    "cdk",
+    "lambda",
+    "ai",
+    "content-generation",
+    "bedrock"
+  ],
+  "author": "ContentFlow AI Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.130",
+    "@types/jest": "^29.5.8",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.9.0",
+    "aws-cdk": "^2.110.0",
+    "fast-check": "^4.5.3",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.450.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.975.0",
+    "@aws-sdk/client-comprehend": "^3.450.0",
+    "@aws-sdk/client-dynamodb": "^3.450.0",
+    "@aws-sdk/client-s3": "^3.450.0",
+    "@aws-sdk/client-sagemaker": "^3.975.0",
+    "@aws-sdk/client-sagemaker-runtime": "^3.450.0",
+    "@aws-sdk/lib-dynamodb": "^3.450.0",
+    "aws-cdk-lib": "^2.110.0",
+    "constructs": "^10.3.0",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1"
+  }
+}
