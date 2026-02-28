@@ -338,7 +338,9 @@
       stats.style.display = "none";
 
       try {
-        const res = await fetch("http://localhost:3000/generate", {
+        // Use relative URL so it works both locally and on Vercel
+        const apiUrl = window.location.origin + "/generate";
+        const res = await fetch(apiUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
