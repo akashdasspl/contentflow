@@ -1,0 +1,16 @@
+node_modules/
+.git/
+.gitignore
+test/
+dist/
+cdk.out/
+*.test.ts
+*.test.js
+.env
+.kiro/
+.vscode/
+*.md
+*.pptx
+test-*.js
+wait-and-test.js
+TASK_*.md
